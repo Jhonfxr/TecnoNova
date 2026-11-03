@@ -1,4 +1,5 @@
 fastapi
 uvicorn[standard]
-httpx
+sqlalchemy
+psycopg2-binary
 python-dotenv
