@@ -1,8 +1,14 @@
 # Backend de DrillSim
 
-API para perfiles, simulaciones y registros complementarios de DrillSim. Usa FastAPI y las tablas PostgreSQL del proyecto DrillSim en Supabase. La API transmite el token del usuario a Supabase para aplicar las reglas de seguridad por filas.
+API para consultar y registrar sistemas, equipos y escenarios del simulador. Está desarrollada con FastAPI, SQLAlchemy y PostgreSQL en Supabase.
 
-## Ejecutar en Windows
+## Tablas
+
+- `sistemas`: nombre y descripción de cada sistema de perforación.
+- `equipos`: nombre, descripción y sistema al que pertenece cada equipo.
+- `escenarios`: nombre, descripción y sistema al que corresponde cada práctica.
+
+## Instalación en Windows
 
 ```powershell
 cd backend
@@ -11,12 +17,14 @@ python -m venv venv
 Copy-Item .env.example .env
 ```
 
-En `.env`, configurar la URL y la clave publicable del proyecto desde Supabase. No usar la clave secreta ni subir el archivo `.env` a GitHub.
+En Supabase, abrir el proyecto DrillSim y copiar la conexión **Session pooler** desde Connect. Colocarla en `.env` después de `DATABASE_URL=` y reemplazar el marcador de contraseña. Codificar los caracteres especiales de la contraseña en la URL; por ejemplo, `@` es `%40`. No subir `.env` a GitHub.
 
 ```powershell
 .\venv\Scripts\python -m uvicorn main:app --reload --port 8000
 ```
 
-Abrir http://127.0.0.1:8000/docs. Los endpoints requieren un token de acceso de un usuario de Supabase Auth: selecciona **Authorize** y pega el token. Crear primero la cuenta en Auth y luego su perfil con `POST /api/v1/users/me`. Después se pueden registrar y consultar simulaciones e intentos con sus rutas GET y POST.
+Abrir http://127.0.0.1:8000/docs. Cada tabla tiene rutas GET y POST. Crear primero un sistema; usar el `id` obtenido como `sistema_id` al crear un equipo o escenario.
 
-La autenticación y el almacenamiento están vinculados a cada usuario; la API no guarda contraseñas. El proyecto original de DrillSim utiliza SQLite local: esta API es una adaptación independiente para la tarea.
+Ejemplos: un sistema llamado Circulación, un equipo llamado Bomba de lodo y un escenario llamado Obstrucción de broca.
+
+La API es para práctica local y sus rutas POST no tienen autenticación. Antes de publicarla, implementar autenticación y autorización: una conexión de PostgreSQL privilegiada puede eludir RLS. El simulador original usa SQLite local; esta API es una adaptación independiente.
