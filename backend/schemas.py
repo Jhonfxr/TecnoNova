@@ -33,6 +33,9 @@ class ProductoIn(Input):
     descripcion: Annotated[str, Field(min_length=1, max_length=2000)]
     precio: Money
     stock: Annotated[int, Field(strict=True, ge=0, le=2147483647)]
+    expected_stock: Annotated[int, Field(strict=True, ge=0, le=2147483647)] | None = Field(
+        default=None, exclude=True,
+    )
     modelo_3d: Model3D
     color: Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")]
     activo: bool = True

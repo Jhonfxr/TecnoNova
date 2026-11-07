@@ -23,10 +23,10 @@ from schemas import (
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="API TecnoNova", version="1.0.0")
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
-                   if origin.strip()],
+    allow_origins=[origin.strip() for origin in cors_origins.split(",") if origin.strip()],
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "X-Admin-Key"],
 )
@@ -104,8 +104,12 @@ def crear_producto(datos: ProductoIn, db: DB):
 
 @api.put("/productos/{producto_id}", response_model=ProductoOut, dependencies=admin)
 def editar_producto(producto_id: ProductId, datos: ProductoIn, db: DB):
+    if datos.expected_stock is None:
+        raise HTTPException(422, "Envía expected_stock con el stock que viste al abrir el formulario")
     with db.begin():
         product = bloquear_producto(db, producto_id)
+        if product.stock != datos.expected_stock:
+            raise HTTPException(409, "El stock cambió. Recarga el producto antes de editarlo.")
         verificar_categoria(db, datos.categoria_id)
         for name, value in datos.model_dump().items():
             setattr(product, name, value)

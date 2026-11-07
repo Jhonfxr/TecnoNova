@@ -101,11 +101,21 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.sale(order, [(a, 2), (b, 1)]).status_code, 409)
         self.assertEqual([p["stock"] for p in self.client.get(PREFIX + "/productos").json()], [2, 4])
 
+    def test_stale_product_edit_cannot_restore_stock_sold_after_form_opened(self):
+        product = self.product()
+        product_id = product["id"]
+        self.assertEqual(self.sale(uuid4(), [(product_id, 1)]).status_code, 201)
+        response = self.client.put(f"{PREFIX}/productos/{product_id}", headers=KEY,
+                                   json=PRODUCT | {"expected_stock": product["stock"]})
+        self.assertEqual(response.status_code, 409, response.text)
+        self.assertEqual(self.client.get(PREFIX + "/productos").json()[0]["stock"], 4)
+
     def test_archive_preserves_sale_snapshot(self):
         product_id = self.product()["id"]
         self.assertEqual(self.sale(uuid4(), [(product_id, 1)]).status_code, 201)
         updated = self.client.put(f"{PREFIX}/productos/{product_id}", headers=KEY,
-                                  json=PRODUCT | {"nombre": "Renombrado", "precio": "20", "stock": 4})
+                                  json=PRODUCT | {"nombre": "Renombrado", "precio": "20",
+                                                  "stock": 4, "expected_stock": 4})
         self.assertEqual(updated.status_code, 200, updated.text)
         self.assertEqual(self.client.delete(f"{PREFIX}/productos/{product_id}", headers=KEY).status_code, 204)
         self.assertEqual(self.client.get(PREFIX + "/productos").json(), [])
