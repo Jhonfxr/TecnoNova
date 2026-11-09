@@ -1,30 +1,30 @@
-# Backend de DrillSim
+# TecnoNova
 
-API para consultar y registrar sistemas, equipos y escenarios del simulador. Está desarrollada con FastAPI, SQLAlchemy y PostgreSQL en Supabase.
+Tienda de tecnología con catálogo, inventario, ventas de demostración y showroom 3D. El frontend usa React, Vite y Three.js. La API usa FastAPI y guarda los datos en Supabase.
 
-## Tablas
+- [Tienda publicada](https://tecno-nova-psi.vercel.app/)
+- [Documentación de la API](https://tecnonova-api.onrender.com/docs)
 
-- `sistemas`: nombre y descripción de cada sistema de perforación.
-- `equipos`: nombre, descripción y sistema al que pertenece cada equipo.
-- `escenarios`: nombre, descripción y sistema al que corresponde cada práctica.
+## Recorrer la tienda
 
-## Instalación en Windows
+En **Showroom 3D** apareces en la entrada. Usa WASD o las flechas para caminar y arrastra el ratón para mirar. Apunta a un producto cercano y pulsa E para abrir su ficha. En el celular, usa los botones de dirección y arrastra para mirar. **Vista general** muestra el plano en perspectiva.
+
+## Ejecutar en Windows
+
+Configura backend/.env a partir de backend/.env.example. Para una base nueva, aplica database/schema.sql y luego database/seed.sql. En PowerShell, desde la raíz del repositorio:
 
 ```powershell
 cd backend
-python -m venv venv
-.\venv\Scripts\python -m pip install -r requirements.txt
-Copy-Item .env.example .env
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8001
 ```
 
-En Supabase, abrir el proyecto DrillSim y copiar la conexión **Session pooler** desde Connect. Colocarla en `.env` después de `DATABASE_URL=` y reemplazar el marcador de contraseña. Codificar los caracteres especiales de la contraseña en la URL; por ejemplo, `@` es `%40`. No subir `.env` a GitHub.
+En otra terminal, desde la raíz:
 
 ```powershell
-.\venv\Scripts\python -m uvicorn main:app --reload --port 8000
+cd frontend
+npm ci
+npm run dev
 ```
 
-Abrir http://127.0.0.1:8000/docs. Cada tabla tiene rutas GET y POST. Crear primero un sistema; usar el `id` obtenido como `sistema_id` al crear un equipo o escenario.
-
-Ejemplos: un sistema llamado Circulación, un equipo llamado Bomba de lodo y un escenario llamado Obstrucción de broca.
-
-La API es para práctica local y sus rutas POST no tienen autenticación. Antes de publicarla, implementar autenticación y autorización: una conexión de PostgreSQL privilegiada puede eludir RLS. El simulador original usa SQLite local; esta API es una adaptación independiente.
+Abre la dirección Local que imprima Vite. Para producción, el frontend usa VITE_API_URL y la API incluye el dominio público del frontend en CORS_ORIGINS.
