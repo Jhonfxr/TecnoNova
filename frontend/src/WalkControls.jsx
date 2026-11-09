@@ -1,8 +1,9 @@
 import {useEffect, useRef} from 'react';
 import {useFrame, useThree} from '@react-three/fiber';
 import {Euler, Raycaster, Vector2} from 'three';
+import {canWalk, ENTRANCE} from './storeLayout';
 
-export default function WalkControls({products, onSelect}) {
+export default function WalkControls({products, onSelect, fixtures, marker, touchKeys}) {
   const {camera, gl, scene} = useThree();
   const keys = useRef(new Set());
   const rotation = useRef(new Euler(0, 0, 0, 'YXZ'));
@@ -10,8 +11,8 @@ export default function WalkControls({products, onSelect}) {
 
   useEffect(() => {
     const canvas = gl.domElement;
-    camera.position.set(0, 1.65, 8);
-    rotation.current.set(0, 0, 0);
+    camera.position.set(...ENTRANCE);
+    rotation.current.set(-.035, 0, 0);
     camera.rotation.copy(rotation.current);
     const previousTabIndex = canvas.tabIndex;
     canvas.tabIndex = 0;
@@ -50,15 +51,17 @@ export default function WalkControls({products, onSelect}) {
   }, [camera, gl]);
 
   useFrame((_, delta) => {
-    const held = keys.current;
-    if (held.delete('KeyE')) {
+    const held = new Set([...keys.current, ...touchKeys.current]);
+    if (held.has('KeyE')) {
+      keys.current.delete('KeyE');
+      touchKeys.current.delete('KeyE');
       ray.current.setFromCamera(new Vector2(), camera);
       for (const hit of ray.current.intersectObjects(scene.children, true)) {
         if (hit.distance > 5) break;
         let node = hit.object;
-        while (node && node.userData.productIndex === undefined) node = node.parent;
+        while (node && node.userData.productId === undefined) node = node.parent;
         if (node) {
-          const product = products[node.userData.productIndex];
+          const product = products.find(item => item.id === node.userData.productId);
           if (product) onSelect(product);
           break;
         }
@@ -68,19 +71,16 @@ export default function WalkControls({products, onSelect}) {
       Number(held.has('KeyS') || held.has('ArrowDown'));
     const side = Number(held.has('KeyD') || held.has('ArrowRight')) -
       Number(held.has('KeyA') || held.has('ArrowLeft'));
+    const {x: currentX, z: currentZ} = camera.position;
+    const heading = -rotation.current.y * 180 / Math.PI;
+    marker.current?.setAttribute('transform', `translate(${currentX} ${currentZ}) rotate(${heading})`);
     if (!forward && !side) return;
     const step = Math.min(delta, .05) * 4 / Math.hypot(forward, side);
     const yaw = rotation.current.y;
     const x = camera.position.x + (side * Math.cos(yaw) - forward * Math.sin(yaw)) * step;
     const z = camera.position.z - (side * Math.sin(yaw) + forward * Math.cos(yaw)) * step;
-    function clear(x, z) {
-      return Math.abs(x) < 11.5 && Math.abs(z) < 11.5 &&
-        !products.slice(0,12).some((_, i) =>
-          Math.abs(x - (i % 4 - 1.5) * 4) < 1.7 &&
-          Math.abs(z - (Math.floor(i / 4) - 1) * 4) < 1.6);
-    }
-    if (clear(x, camera.position.z)) camera.position.x = x;
-    if (clear(camera.position.x, z)) camera.position.z = z;
+    if (canWalk(x, camera.position.z, fixtures)) camera.position.x = x;
+    if (canWalk(camera.position.x, z, fixtures)) camera.position.z = z;
   });
 
   return null;
