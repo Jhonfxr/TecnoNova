@@ -1,11 +1,11 @@
 export const ROOM = {halfWidth: 10, halfDepth: 12, height: 4.4};
-export const ENTRANCE = [0, 1.65, 10];
+export const ENTRANCE = [0, 1.65, 10.7];
 
 const bays = [
-  {x: -8.6, z: 4.9, angle: Math.PI / 2, color: '#547662'},
-  {x: 8.6, z: 4.9, angle: -Math.PI / 2, color: '#375f85'},
-  {x: -8.6, z: -4.7, angle: Math.PI / 2, color: '#845238'},
-  {x: 8.6, z: -4.7, angle: -Math.PI / 2, color: '#645284'},
+  {x: -8.6, z: 2.7, angle: Math.PI / 2, color: '#547662'},
+  {x: 8.6, z: 2.7, angle: -Math.PI / 2, color: '#375f85'},
+  {x: -8.6, z: -5.9, angle: Math.PI / 2, color: '#845238'},
+  {x: 8.6, z: -5.9, angle: -Math.PI / 2, color: '#645284'},
   {x: -5, z: -10.6, angle: 0, color: '#477869'},
   {x: 4, z: -10.6, angle: 0, color: '#375f85'},
 ];

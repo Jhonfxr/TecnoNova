@@ -57,7 +57,7 @@ export default function Scene({products=[], categories=[], selected, onSelect, r
     </>}
     <SceneBoundary key={room ? 'room' : 'hero'}>
       <Canvas key={inStore ? 'walk' : 'orbit'} shadows={!room} dpr={[1,1.5]}
-        camera={{position:room ? [7,13,17] : [5,3.7,6], fov:room ? 62 : 38}}
+        camera={{position:room ? [7,13,17] : [5,3.7,6], fov:room ? 70 : 38}}
         gl={{antialias:true}}>
         <color attach="background" args={[room ? '#b4c2b9' : '#202920']}/>
         {room ? <>
