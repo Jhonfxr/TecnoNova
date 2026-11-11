@@ -12,15 +12,33 @@ export function Device({type='laptop',color='#c5f66b',...props}){
 class SceneBoundary extends Component {state={failed:false};static getDerivedStateFromError(){return {failed:true}} render(){return this.state.failed?<div className="scene-fallback">Tu dispositivo no pudo iniciar el visor 3D. Puedes seguir explorando y comprando desde el catálogo.</div>:this.props.children}}
 function StoreMap({layout, marker}) {
   return <div className="store-map" aria-label="Plano de la tienda">
+    <span>Plano de la tienda</span>
     <svg viewBox="-10 -12 20 24" role="img" aria-label="Zonas, exhibidores y tu posición">
-      <rect x="-10" y="-12" width="20" height="24" fill="#edf0e7"/>
-      {layout.fixtures.map(({x,z,width,depth}, i) => <rect key={i}
-        x={x-width/2} y={z-depth/2} width={width} height={depth}
-        rx=".25" fill={layout.zones[i]?.color || '#809487'}/>)}
-      <g ref={marker}><path d="M0 -.9 L.52 .55 L0 .32 L-.52 .55 Z" fill="#121f19" stroke="#fff" strokeWidth=".13"/></g>
+      <rect x="-9.8" y="-11.8" width="19.6" height="23.6" rx=".7" fill="#1b2530" stroke="#4a5866" strokeWidth=".22"/>
+      <path d="M0 10.5V-8.25" stroke="#495867" strokeWidth=".24" strokeDasharray=".65 .55"/>
+      {layout.fixtures.map(({x,z,width,depth,color,name}) => <g key={name || 'checkout'}>
+        <rect x={x-width/2} y={z-depth/2} width={width} height={depth}
+          rx=".3" fill={color || '#738295'} fillOpacity=".24" stroke={color || '#738295'} strokeWidth=".16"/>
+        {name && <text x={x} y={z} transform={depth > width ? `rotate(-90 ${x} ${z})` : undefined}
+          textAnchor="middle" dominantBaseline="central" fontSize=".96" fill="#f0f5fc">{name}</text>}
+      </g>)}
+      <g ref={marker}><path d="M0 -1.13 L.69 .68 L0 .37 L-.69 .68 Z" fill="#c5f66b" stroke="#101a13" strokeWidth=".18"/></g>
     </svg>
-    <span>PLANO · ENTRADA ↓</span>
   </div>;
+}
+
+function StoreCompass({needle}) {
+  return <svg className="store-compass" viewBox="0 0 64 64" aria-hidden="true">
+    <circle cx="32" cy="32" r="30" fill="#101720" stroke="#586679" strokeOpacity=".8"/>
+    <g fill="#dce6f3" fontSize="8" fontWeight="700" textAnchor="middle">
+      <text x="32" y="13">N</text><text x="53" y="35">E</text>
+      <text x="32" y="57">S</text><text x="11" y="35">O</text>
+    </g>
+    <g ref={needle}>
+      <path d="M32 17 L39 34 L32 31 L25 34 Z" fill="#c5f66b"/>
+      <path d="M32 46 L25 34 L32 37 L39 34 Z" fill="#7f8b99"/>
+    </g>
+  </svg>;
 }
 
 const directions = [['KeyW','↑','Avanzar'],['KeyA','←','Izquierda'],
@@ -29,6 +47,7 @@ const directions = [['KeyW','↑','Avanzar'],['KeyA','←','Izquierda'],
 export default function Scene({products=[], categories=[], selected, onSelect, room=false, rotate=true}) {
   const [walking,setWalking] = useState(true);
   const marker = useRef(null);
+  const needle = useRef(null);
   const touchKeys = useRef(new Set());
   const layout = useMemo(() => storeLayout(categories, products), [categories, products]);
   const product = selected || products[0];
@@ -45,6 +64,7 @@ export default function Scene({products=[], categories=[], selected, onSelect, r
     {inStore && <>
       <span className="store-crosshair" aria-hidden="true">+</span>
       <StoreMap layout={layout} marker={marker}/>
+      <StoreCompass needle={needle}/>
       <div className="store-touch" aria-label="Controles táctiles">
         {directions.map(([key,label,name]) => <button key={key} aria-label={name}
           onPointerDown={event => {
@@ -57,12 +77,13 @@ export default function Scene({products=[], categories=[], selected, onSelect, r
     </>}
     <SceneBoundary key={room ? 'room' : 'hero'}>
       <Canvas key={inStore ? 'walk' : 'orbit'} shadows={!room} dpr={[1,1.5]}
-        camera={{position:room ? [7,13,17] : [5,3.7,6], fov:room ? 70 : 38}}
+        camera={{position:room ? [7,13,17] : [5,3.7,6], fov:room ? 68 : 38}}
         gl={{antialias:true}}>
-        <color attach="background" args={[room ? '#b4c2b9' : '#202920']}/>
+        <color attach="background" args={[room ? '#151c26' : '#202920']}/>
         {room ? <>
-          <hemisphereLight args={['#fff9ea','#a4ad9c',2.2]}/>
-          <directionalLight position={[3,8,5]} intensity={1.5}/>
+          <hemisphereLight args={['#e5efff','#677488',2.05]}/>
+          <directionalLight position={[3,8,6]} color="#e5efff" intensity={2.15}/>
+          <directionalLight position={[-6,5,-3]} color="#c8d5ff" intensity={.9}/>
         </> : <>
           <ambientLight intensity={1.7}/>
           <directionalLight position={[4,8,5]} intensity={3} castShadow/>
@@ -79,8 +100,8 @@ export default function Scene({products=[], categories=[], selected, onSelect, r
                 <ContactShadows position={[0,-1.5,0]} opacity={.5} scale={12} blur={2.5} far={5}/>
               </>}
           {inStore
-            ? <WalkControls products={products} onSelect={onSelect} fixtures={layout.fixtures}
-                marker={marker} touchKeys={touchKeys}/>
+            ? <WalkControls products={products} onSelect={onSelect} fixtures={layout.obstacles}
+                marker={marker} needle={needle} touchKeys={touchKeys}/>
             : <OrbitControls makeDefault autoRotate={rotate && !room} autoRotateSpeed={.6}
                 enablePan={room} minDistance={4} maxDistance={room ? 32 : 10}
                 maxPolarAngle={Math.PI/2.06} target={room ? [0,ROOM.height/3,0] : [0,.3,0]}/>}

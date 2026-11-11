@@ -1,116 +1,161 @@
 import {useEffect, useMemo} from 'react';
-import {CanvasTexture, SRGBColorSpace} from 'three';
-import {Html} from '@react-three/drei';
-import {ROOM} from './storeLayout';
+import {CanvasTexture, Color, SRGBColorSpace} from 'three';
+import {Html, RoundedBox} from '@react-three/drei';
+import {CHECKOUT, EXHIBIT, ROOM} from './storeLayout';
 
-function Block({size, at, color, glow = false}) {
+function Block({size, at, color, glow = false, roughness = .72}) {
   return <mesh position={at} receiveShadow>
     <boxGeometry args={size}/>
-    <meshStandardMaterial color={color} roughness={.75}
-      emissive={glow ? color : '#000000'} emissiveIntensity={glow ? .7 : 0}/>
+    {glow
+      ? <meshBasicMaterial color={color} toneMapped={false}/>
+      : <meshStandardMaterial color={color} roughness={roughness}/>}
   </mesh>;
 }
 
-function Sign({label, subtitle, at, color = '#213b32', width = 4.8}) {
+function Trim({size, at, color, radius = .12, light = false}) {
+  return <RoundedBox args={size} position={at} radius={radius} smoothness={2}>
+    {light
+      ? <meshBasicMaterial color={color} toneMapped={false}/>
+      : <meshStandardMaterial color={color} roughness={.44} metalness={.24}/>}
+  </RoundedBox>;
+}
+
+function Sign({label, subtitle, at, color = '#c5f66b', width = 4.8}) {
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 768;
+    canvas.width = 1024;
     canvas.height = 192;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 768, 192);
-    ctx.fillStyle = '#f9fcf6';
-    ctx.font = '700 56px system-ui';
+    ctx.fillStyle = '#121922';
+    ctx.fillRect(0, 0, 1024, 192);
+    ctx.fillStyle = '#f4f7ff';
+    ctx.font = '700 72px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText(label, 384, 85, 710);
-    ctx.fillStyle = '#e5f2d5';
-    ctx.font = '500 27px system-ui';
-    ctx.fillText(subtitle, 384, 143, 710);
+    ctx.fillText(label, 512, 91, 930);
+    ctx.fillStyle = color;
+    ctx.font = '600 31px system-ui';
+    ctx.fillText(subtitle, 512, 145, 930);
+    ctx.fillRect(404, 178, 216, 5);
     const map = new CanvasTexture(canvas);
     map.colorSpace = SRGBColorSpace;
     return map;
   }, [label, subtitle, color]);
   useEffect(() => () => texture.dispose(), [texture]);
   return <mesh position={at}>
-    <planeGeometry args={[width, width / 4]}/>
+    <planeGeometry args={[width, width * .1875]}/>
     <meshBasicMaterial map={texture} toneMapped={false}/>
   </mesh>;
 }
 
-function Plant({at}) {
-  return <group position={at}>
-    <mesh position={[0,.23,0]}><cylinderGeometry args={[.29,.22,.46,12]}/><meshStandardMaterial color="#3b4844"/></mesh>
-    {[[-.18,.7,0],[.18,.82,.07],[0,1,-.1]].map((position,i) =>
-      <mesh key={i} position={position} scale={[.28,.43,.28]}>
-        <sphereGeometry args={[1,10,8]}/><meshStandardMaterial color={i === 1 ? '#688658' : '#426748'}/>
-      </mesh>)}
-  </group>;
+function LightWash({texture, size, at, color, floor = false, opacity = .46}) {
+  return <mesh position={at} rotation={floor ? [-Math.PI / 2,0,0] : [0,0,0]}>
+    <planeGeometry args={size}/>
+    <meshBasicMaterial map={texture} color={color} transparent opacity={opacity}
+      depthWrite={false} toneMapped={false}/>
+  </mesh>;
 }
 
 const elevations = {laptop:0, phone:1.25, headphones:.75, keyboard:.06, monitor:1.05, speaker:1.1};
 
-function DisplayProduct({product, at, Device, selected, onSelect, label = true}) {
-  const scale = .42;
+function DisplayProduct({product, at, Device, selected, onSelect, accent}) {
+  const scale = .46;
   return <group position={at} userData={{productId:product.id}}
     onClick={event => {event.stopPropagation(); onSelect(product);}}>
-    <Block size={[1.75,.09,1.42]} at={[0,0,0]} color={selected ? '#a7cf66' : '#d2ded5'}/>
+    <Trim size={[1.56,.09,1.46]} at={[0,0,0]} color={selected ? accent : '#3b4859'}
+      radius={.045}/>
     <Device type={product.modelo_3d} color={product.color} scale={scale}
-      position={[0,.06+(elevations[product.modelo_3d] ?? 1.1)*scale,0]}/>
-    {label && <Html position={[0,.05,.78]} center distanceFactor={7} occlude>
-      <button className={'pod-label' + (selected ? ' active' : '')} onClick={() => onSelect(product)}>
+      position={[0,.06+(elevations[product.modelo_3d] ?? 1.1)*scale,0]}
+      rotation={[0,-.12,0]}/>
+    <Html position={[0,.13,.69]} center distanceFactor={6.4} occlude>
+      <button className={'pod-label product-marker' + (selected ? ' active' : '')}
+        style={{'--exhibit-accent':accent}} onClick={() => onSelect(product)}>
         {product.nombre}
       </button>
-    </Html>}
+    </Html>
+  </group>;
+}
+
+function Counter({width, depth, color, wash}) {
+  return <>
+    <LightWash texture={wash} size={[width+1.65,depth+1.55]} at={[0,.024,0]} color={color} floor/>
+    <Trim size={[width-.25,.15,depth-.21]} at={[0,.11,0]} color="#151c28" radius={.07}/>
+    <Trim size={[width-.16,.042,depth-.14]} at={[0,.19,0]} color={color} radius={.02} light/>
+    <Trim size={[width-.13,.64,depth-.13]} at={[0,.525,0]} color="#253141"/>
+    <Trim size={[width,.046,depth]} at={[0,.858,0]} color={color} radius={.022} light/>
+    <Trim size={[width-.03,.114,depth-.03]} at={[0,.933,0]} color="#657488" radius={.055}/>
+  </>;
+}
+
+function Exhibit({zone, selected, onSelect, Device, wash}) {
+  const {length,depth} = EXHIBIT;
+  const {angle,color,items,name,x,z} = zone;
+  const back = -(angle ? EXHIBIT.backdrop : EXHIBIT.rearBackdrop);
+  const signOffset = z > 0 ? Math.sign(angle)*1.52 : 0;
+  const tint = new Color('#172231').lerp(new Color(color), .16);
+  return <group position={[x,0,z]} rotation={[0,angle,0]}>
+    <Counter width={length} depth={depth} color={color} wash={wash}/>
+    <Trim size={[length+.65,3.6,.19]} at={[0,1.93,back]} color="#293546" radius={.18}/>
+    <Trim size={[length+.35,3.32,.09]} at={[0,1.93,back+.13]} color="#101925" radius={.12}/>
+    <Trim size={[length-.15,1.94,.055]} at={[0,1.48,back+.20]} color={tint} radius={.03}/>
+    <LightWash texture={wash} size={[length-.17,2.06]} at={[0,1.64,back+.238]} color={color} opacity={.39}/>
+    {[.56,2.52].map(y =>
+      <Block key={y} size={[length-.14,.032,.05]} at={[0,y,back+.26]} color={color} glow/>)}
+    <Sign label={name} subtitle={items.length + (items.length === 1 ? ' producto' : ' productos')}
+      at={[signOffset,3.06,back+.24]} color={color} width={z > 0 ? 4.35 : 6.5}/>
+    {items.length > 4 && <Trim size={[length,.11,1.42]} at={[0,1.98,-.39]} color="#536177" radius={.045}/>}
+    {items.slice(0,8).map((product,index) => {
+      const row = Math.floor(index / 4);
+      const count = Math.min(4, items.length - row*4);
+      const spacing = Math.min(2.2, (length-1.68) / Math.max(1,count-1));
+      return <DisplayProduct key={product.id} product={product} Device={Device} accent={color}
+        at={[(index % 4 - (count-1)/2)*spacing,row ? 2.1 : 1.05,row ? -.4 : .06]}
+        selected={selected?.id === product.id} onSelect={onSelect}/>;
+    })}
   </group>;
 }
 
 export default function StoreRoom({layout, selected, onSelect, Device, walking}) {
   const {halfWidth, halfDepth, height} = ROOM;
-  const feature = layout.zones[0]?.items[0];
+  const wash = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createRadialGradient(64,64,12,64,64,64);
+    gradient.addColorStop(0,'rgba(255,255,255,1)');
+    gradient.addColorStop(.63,'rgba(255,255,255,.62)');
+    gradient.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,128,128);
+    return new CanvasTexture(canvas);
+  }, []);
+  useEffect(() => () => wash.dispose(), [wash]);
+
   return <>
-    <Block size={[20,.16,24]} at={[0,-.08,0]} color="#cdd4cb"/>
-    <gridHelper args={[24,12,'#b3bdb3','#bac4ba']} position={[0,.004,0]}/>
-    <Block size={[20,.022,22]} at={[0,0,-.5]} color="#dbe0d8"/>
-    <Block size={[3.1,.016,19]} at={[0,.021,0]} color="#b9cbbd"/>
-    <Block size={[20,height,.22]} at={[0,height/2,-halfDepth]} color="#eef0e8"/>
-    <Block size={[.22,height,24]} at={[-halfWidth,height/2,0]} color="#e9ede6"/>
-    <Block size={[.22,height,24]} at={[halfWidth,height/2,0]} color="#e9ede6"/>
+    <Block size={[20,.16,24]} at={[0,-.08,0]} color="#475569" roughness={.46}/>
+    <Block size={[4.45,.016,24]} at={[0,.008,0]} color="#202a38" roughness={.82}/>
+    {[-2.25,2.25].map(x =>
+      <Block key={x} size={[.035,.012,24]} at={[x,.013,0]} color="#768597"/>)}
+    <Block size={[20,height,.24]} at={[0,height/2,-halfDepth]} color="#252e3d"/>
+    {[-halfWidth,halfWidth].map(x =>
+      <Block key={x} size={[.24,height,24]} at={[x,height/2,0]} color="#202a38"/>)}
     {walking && <>
-      <Block size={[20,.2,24]} at={[0,height,0]} color="#e4e8e3"/>
-      <Block size={[7.7,height,.22]} at={[-6.15,height/2,halfDepth]} color="#e9ede6"/>
-      <Block size={[7.7,height,.22]} at={[6.15,height/2,halfDepth]} color="#e9ede6"/>
-      <Block size={[4.6,1,.22]} at={[0,3.9,halfDepth]} color="#304d40"/>
+      <Block size={[20,.18,24]} at={[0,height,0]} color="#151c26"/>
+      {[-6.2,6.2].map(x =>
+        <Block key={x} size={[7.6,height,.24]} at={[x,height/2,halfDepth]} color="#202a38"/>)}
+      {[-7.2,7.2].map(x =>
+        <Block key={x} size={[.052,.042,21]} at={[x,height-.16,0]} color="#c4d9f4" glow/>)}
+      {[-8,-4,0,4,8].map(z =>
+        <Block key={z} size={[.38,.058,1.8]} at={[0,height-.16,z]} color="#edf6ff" glow/>)}
     </>}
-    {[-6,0,6].flatMap(x => [-8,-2,4,9].map(z =>
-      <Block key={x+':'+z} size={[.32,.055,2.7]} at={[x,height-.16,z]} color="#fff9e8" glow/>))}
-    <Sign label="TECNONOVA" subtitle="TECNOLOGÍA · SHOWROOM" at={[0,3.52,-11.86]} width={6.2}/>
-    <Block size={[3.5,1,1.5]} at={[0,.5,-8.2]} color="#385344"/>
-    <Block size={[3.6,.1,1.6]} at={[0,1.05,-8.2]} color="#eef2e8"/>
-    <Block size={[.58,.32,.27]} at={[.9,1.26,-8.35]} color="#273837"/>
-    <Sign label="CAJA" subtitle="Atención y retiro" at={[0,.62,-7.43]} width={1.75}/>
-    <Block size={[3.5,.8,2.2]} at={[0,.4,0]} color="#526c5c"/>
-    <Block size={[3.55,.09,2.25]} at={[0,.84,0]} color="#eef2e8"/>
-    <Sign label="DESTACADO" subtitle="Colección Nova" at={[0,.52,1.112]} width={2}/>
-    {feature && <DisplayProduct product={feature} Device={Device} at={[0,.91,0]}
-      selected={selected?.id === feature.id} onSelect={onSelect}/>}
-    {[[-8.8,0,-10.5],[8.8,0,-10.5],[-7,0,10.5],[7,0,10.5]].map(at =>
-      <Plant key={at.join()} at={at}/>)}
-    {layout.zones.map(zone => <group key={zone.key} position={[zone.x,0,zone.z]} rotation={[0,zone.angle,0]}>
-      <Block size={[7.6,.85,2]} at={[0,.425,0]} color={zone.color}/>
-      <Block size={[7.62,.09,2]} at={[0,.89,0]} color="#f2f4eb"/>
-      <Block size={[7.6,2.7,.1]} at={[0,1.65,-.96]} color="#e1e7dd"/>
-      <Block size={[7.62,.07,.1]} at={[0,2.28,-.89]} color="#e8ffca" glow/>
-      <Sign label={zone.name.toUpperCase()} subtitle={zone.items.length + ' productos'} at={[0,2.86,-.88]} color={zone.color}/>
-      {zone.items.slice(0,8).map((product,i) => {
-        const count = Math.min(4, zone.items.length - Math.floor(i / 4)*4);
-        const row = Math.floor(i / 4);
-        return <group key={product.id}>
-          {row === 1 && i === 4 && <Block size={[7.6,.08,1.65]} at={[0,1.73,-.12]} color="#f2f4eb"/>}
-          <DisplayProduct product={product} Device={Device}
-            at={[(i % 4 - (count-1)/2)*1.82, row ? 1.8 : .96, -.12]}
-            selected={selected?.id === product.id} onSelect={onSelect}/>
-        </group>;
-      })}
-    </group>)}
+    <Trim size={[5.35,3.72,.20]} at={[0,1.9,-11.68]} color="#57677b" radius={.15}/>
+    <Trim size={[5.16,3.56,.12]} at={[0,1.9,-11.51]} color="#121925" radius={.12}/>
+    <Sign label="TECNONOVA" subtitle="SHOWROOM" at={[0,2.77,-11.40]} width={4.75}/>
+    <group position={[CHECKOUT.x,0,CHECKOUT.z]}>
+      <Counter width={CHECKOUT.width} depth={CHECKOUT.depth} color="#b9ec83" wash={wash}/>
+      <Sign label="CAJA" subtitle="Atención y retiro" at={[0,.56,.80]} width={2.27}/>
+      <Trim size={[.54,.34,.18]} at={[.95,1.17,-.25]} color="#0e1720" radius={.045}/>
+    </group>
+    {layout.zones.map(zone => <Exhibit key={zone.name} zone={zone} selected={selected}
+      onSelect={onSelect} Device={Device} wash={wash}/>)}
   </>;
 }

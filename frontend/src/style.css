@@ -6,16 +6,25 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
 .store-viewport,.device-viewport{height:100%;position:relative}
+.showroom .room-canvas{height:auto;aspect-ratio:16/10;min-height:420px}
 .store-viewport canvas{touch-action:none}
-.store-hud{position:absolute;z-index:10;top:12px;left:12px;max-width:calc(100% - 24px);padding:8px 10px;border-radius:9px;background:#14221de8;color:#e7eee4}
-.store-hud small{display:block;margin-top:5px;font-size:11px}
-.store-crosshair{position:absolute;z-index:9;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff;text-shadow:0 1px 3px #10241b;font-size:23px}
-.store-map{position:absolute;z-index:9;bottom:12px;left:12px;width:91px;padding:6px;background:#14221ded;border:1px solid #557366;border-radius:9px;color:#e7eee4;pointer-events:none}
-.store-map svg{width:100%;display:block;border-radius:4px}
-.store-map span{display:block;text-align:center;font-size:8px;margin-top:4px}
+.store-hud{position:absolute;z-index:10;top:14px;left:14px;max-width:calc(100% - 28px);padding:8px 10px;border-radius:10px;background:#101720e8;border:1px solid #465465;color:#e7edf5}
+.store-hud small{display:block;margin-top:6px;font-size:11px;color:#d0dae6}
+.store-crosshair{position:absolute;z-index:9;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff;text-shadow:0 1px 4px #101720;font-size:20px}
+.store-map{position:absolute;z-index:9;bottom:14px;right:14px;width:133px;padding:8px;background:#101720ed;border:1px solid #5a6879;border-radius:11px;color:#e7edf5;pointer-events:none}
+.store-map svg{width:100%;display:block}
+.store-map span{display:block;text-align:center;font-size:10px;font-weight:700;margin:0 0 6px}
+.store-compass{position:absolute;z-index:9;bottom:14px;left:14px;width:59px;height:59px;pointer-events:none}
+.product-marker{color:#f5f9ff;background:#101720ec;border-color:var(--exhibit-accent)}
+.product-marker.active{color:#101720;background:var(--exhibit-accent)}
 .store-touch{display:none;position:absolute;z-index:10;right:12px;bottom:12px;grid-template-columns:repeat(3,36px);gap:4px;touch-action:none}
 .store-touch button{height:36px;border:1px solid #789483;background:#14221ded;color:white;border-radius:6px;font:inherit}
 .store-touch button:first-child{grid-column:2}
 .store-touch button:nth-child(2){grid-column:1}
 .store-touch button:last-child{grid-column:2}
+@media(max-width:760px),(pointer:coarse){
+  .store-map{right:auto;left:10px;bottom:10px;width:92px;padding:5px}
+  .store-map span{font-size:8px}
+  .store-compass{display:none}
+}
 @media(pointer:coarse){.store-touch{display:grid}}

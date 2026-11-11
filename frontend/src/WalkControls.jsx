@@ -3,7 +3,7 @@ import {useFrame, useThree} from '@react-three/fiber';
 import {Euler, Raycaster, Vector2} from 'three';
 import {canWalk, ENTRANCE} from './storeLayout';
 
-export default function WalkControls({products, onSelect, fixtures, marker, touchKeys}) {
+export default function WalkControls({products, onSelect, fixtures, marker, needle, touchKeys}) {
   const {camera, gl, scene} = useThree();
   const keys = useRef(new Set());
   const rotation = useRef(new Euler(0, 0, 0, 'YXZ'));
@@ -74,6 +74,7 @@ export default function WalkControls({products, onSelect, fixtures, marker, touc
     const {x: currentX, z: currentZ} = camera.position;
     const heading = -rotation.current.y * 180 / Math.PI;
     marker.current?.setAttribute('transform', `translate(${currentX} ${currentZ}) rotate(${heading})`);
+    needle.current?.setAttribute('transform', `rotate(${heading} 32 32)`);
     if (!forward && !side) return;
     const step = Math.min(delta, .05) * 4 / Math.hypot(forward, side);
     const yaw = rotation.current.y;
