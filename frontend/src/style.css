@@ -6,7 +6,7 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
 .store-viewport,.device-viewport{height:100%;position:relative}
-.showroom .room-canvas{height:auto;aspect-ratio:16/10;min-height:420px}
+.showroom .room-canvas{width:100%;min-width:0;height:auto;aspect-ratio:16/10;min-height:420px}
 .store-viewport canvas{touch-action:none}
 .store-hud{position:absolute;z-index:10;top:14px;left:14px;max-width:calc(100% - 28px);padding:8px 10px;border-radius:10px;background:#101720e8;border:1px solid #465465;color:#e7edf5}
 .store-hud small{display:block;margin-top:6px;font-size:11px;color:#d0dae6}
@@ -26,5 +26,8 @@
   .store-map{right:auto;left:10px;bottom:10px;width:92px;padding:5px}
   .store-map span{font-size:8px}
   .store-compass{display:none}
+}
+@media(max-width:760px){
+  .showroom .room-canvas{aspect-ratio:auto;height:420px}
 }
 @media(pointer:coarse){.store-touch{display:grid}}
